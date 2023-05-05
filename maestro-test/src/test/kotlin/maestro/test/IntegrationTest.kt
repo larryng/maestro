@@ -46,6 +46,39 @@ class IntegrationTest {
     }
 
     @Test
+    fun `Case 9999 - Define selectors`() {
+        // Given
+        val commands = readCommands("9999_define_selectors")
+
+        val driver = driver {
+            element {
+                id = "id_email_text"
+                text = "Email"
+                bounds = Bounds.ofSize(100, 100)
+            }
+            element {
+                id = "id_password_text"
+                text = "not password"
+                bounds = Bounds.ofSize(100, 100)
+                    .translate(y = 100)
+            }
+            element {
+                text = "Login"
+                bounds = Bounds.ofSize(100, 100)
+                    .translate(y = 200)
+            }
+        }
+
+        // When
+        Maestro(driver).use {
+            orchestra(it).runFlow(commands)
+        }
+
+        // Then
+        driver.assertHasEvent(Event.Tap(Point(50, 250)))
+    }
+
+    @Test
     fun `Case 001 - Assert element visible by id`() {
         // Given
         val commands = readCommands("001_assert_visible_by_id")
