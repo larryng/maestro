@@ -28,6 +28,7 @@ import maestro.orchestra.BackPressCommand
 import maestro.orchestra.ClearKeychainCommand
 import maestro.orchestra.Condition
 import maestro.orchestra.CopyTextFromCommand
+import maestro.orchestra.DefineSelectorsCommand
 import maestro.orchestra.ElementSelector
 import maestro.orchestra.ElementTrait
 import maestro.orchestra.EraseTextCommand
@@ -99,6 +100,7 @@ data class YamlFluentCommand(
     val travel: YamlTravelCommand? = null,
     val startRecording: YamlStartRecording? = null,
     val stopRecording: YamlStopRecording? = null,
+    val defineSelectors: YamlDefineSelectors? = null,
 ) {
 
     @SuppressWarnings("ComplexMethod")
@@ -217,6 +219,7 @@ data class YamlFluentCommand(
                 val tapRepeat = TapRepeat(2, delay)
                 listOf(tapCommand(doubleTapOn, tapRepeat = tapRepeat))
             }
+            defineSelectors != null -> listOf(defineSelectorsCommand(defineSelectors))
             else -> throw SyntaxError("Invalid command: No mapping provided for $this")
         }
     }
@@ -251,6 +254,14 @@ data class YamlFluentCommand(
                 condition = runFlow.`when`?.toCondition(),
                 sourceDescription = runFlow.file,
                 config
+            )
+        )
+    }
+
+    private fun defineSelectorsCommand(command: YamlDefineSelectors): MaestroCommand {
+        return MaestroCommand(
+            DefineSelectorsCommand(
+                selectors = command.selectors.mapValues { (_, value) -> toElementSelector(value) },
             )
         )
     }
@@ -488,6 +499,7 @@ data class YamlFluentCommand(
         }
 
         return ElementSelector(
+            selector = selector.selector,
             textRegex = selector.text,
             idRegex = selector.id,
             size = size,

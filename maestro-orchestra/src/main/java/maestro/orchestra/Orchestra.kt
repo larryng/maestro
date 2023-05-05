@@ -65,6 +65,7 @@ class Orchestra(
     private lateinit var jsEngine: JsEngine
 
     private var copiedText: String? = null
+    private val customSelectors = mutableMapOf<String, ElementSelector>()
 
     private var timeMsOfLastInteraction = System.currentTimeMillis()
     private var deviceInfo: DeviceInfo? = null
@@ -81,6 +82,7 @@ class Orchestra(
         commands: List<MaestroCommand>,
         initState: OrchestraAppState? = null,
     ): Boolean {
+        customSelectors.clear()
         timeMsOfLastInteraction = System.currentTimeMillis()
 
         val config = YamlCommandReader.getConfig(commands)
@@ -226,6 +228,10 @@ class Orchestra(
         val command = maestroCommand.asCommand()
 
         return when (command) {
+            is DefineSelectorsCommand -> {
+                customSelectors.putAll(command.selectors)
+                true
+            }
             is TapOnElementCommand -> {
                 tapOnElement(
                     command,
@@ -819,6 +825,15 @@ class Orchestra(
     ): FilterWithDescription {
         val filters = mutableListOf<ElementFilter>()
         val descriptions = mutableListOf<String>()
+
+        selector.selector
+            ?.let { selectorName ->
+                val innerSelector = customSelectors[selectorName]
+                    ?: throw IllegalArgumentException("Unknown selector: $selectorName")
+                val innerFilter = buildFilter(innerSelector, deviceInfo)
+                descriptions += "Selector: $selectorName (${innerSelector.description()})"
+                filters += innerFilter.filterFunc
+            }
 
         selector.textRegex
             ?.let {
