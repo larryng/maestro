@@ -398,9 +398,16 @@ class AndroidDriver(
     }
 
     override fun inputText(text: String) {
-        blockingStub.inputText(inputTextRequest {
-            this.text = text
-        }) ?: throw IllegalStateException("Input Response can't be null")
+        var lastStart = -1L
+        text.forEach {
+            // 120 wpm -> 100 ms/char
+            val sleepTime = 100 - (System.currentTimeMillis() - lastStart)
+            if (sleepTime > 0) {
+                Thread.sleep(sleepTime)
+            }
+            lastStart = System.currentTimeMillis()
+            dadb.shell("input text \"$it\"")
+        }
     }
 
     override fun openLink(link: String, appId: String?, autoVerify: Boolean, browser: Boolean) {
